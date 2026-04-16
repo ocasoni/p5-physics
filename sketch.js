@@ -27,14 +27,62 @@ function setup() {
 
   Composite.add(engine.world, obstacle.body);
 
+
+  let button = createButton('Request Sensor Access');
+
+ button.position(10, 10);
+
+ button.mousePressed(() => {
+
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+
+   DeviceOrientationEvent.requestPermission().then(permissionState => {
+
+    if (permissionState === 'granted') {
+
+     console.log('Orientation permission granted');
+
+    }
+
+   }).catch(console.error);
+
+  }
+
+  if (typeof DeviceMotionEvent.requestPermission === 'function') {
+
+   DeviceMotionEvent.requestPermission().then(permissionState => {
+
+    if (permissionState === 'granted') {
+
+     console.log('Motion permission granted');
+
+    }
+
+   }).catch(console.error);
+
+  }
+
+  button.remove();
+
+ });
 }
 
 function draw() {
-  background(220); //se lo commenti i pennelli lasciano una scia, se lo lasci i pennelli non lasciano traccia
+  //background(220); //se lo commenti i pennelli lasciano una scia, se lo lasci i pennelli non lasciano traccia
 
   for (let i=0; i < brushes.length; i++) {
     brushes[i].draw();
   }
+
+  console.log (rotationX, rotationY, rotationZ); 
+
+  let gravityY = map(rotationX, PI, -PI, 1, -1);
+  engine.world.gravity.y = gravityY;
+
+  let gravityX = map(rotationY, -PI, PI, -1, 1);
+  engine.world.gravity.x = gravityX;
+
+
 
   obstacle.draw();
   
