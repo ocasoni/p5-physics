@@ -76,10 +76,10 @@ function draw() {
 
   console.log (rotationX, rotationY, rotationZ); 
 
-  let gravityY = map(rotationX, PI, -PI, 1, -1);
+  let gravityY = map(rotationX, PI, -PI, 2, -2);
   engine.world.gravity.y = gravityY;
 
-  let gravityX = map(rotationY, -PI, PI, -1, 1);
+  let gravityX = map(rotationY, -PI, PI, -2, 2);
   engine.world.gravity.x = gravityX;
 
 
