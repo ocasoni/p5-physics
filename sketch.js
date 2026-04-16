@@ -1,27 +1,41 @@
 let Engine = Matter.Engine,
+    Body = Matter.Body,
+    Bodies = Matter.Bodies,
     Composite = Matter.Composite;
 
 let engine;
 let brush;
+let brushes = [];
 let obstacle; 
+
+let NUM_BRUSHES = 10;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   engine = Engine.create();
 
-  brush = new Brush(width / 2, height / 4, 50);
+  for (let i = 0; i < NUM_BRUSHES; i++) {
+    let size = random(10, 30);
+    brush = new Brush(width / 2, height / 4, size); //creati i pennelli in alto al centro
+    brushes.push(brush); //aggiunti i pennelli all'array
+    Composite.add(engine.world, brush.body); //aggiunti i pennelli al mondo di Matter.js
+  }
+
+
   obstacle = new Obstacle(width / 2, 600, 300, 50, PI / 6);
 
-  console.log (obstacle);
-  
-  Composite.add(engine.world, [brush.body, obstacle.body]);
+
+  Composite.add(engine.world, obstacle.body);
 
 }
 
 function draw() {
-  background(220);
+  background(220); //se lo commenti i pennelli lasciano una scia, se lo lasci i pennelli non lasciano traccia
 
-  brush.draw();
+  for (let i=0; i < brushes.length; i++) {
+    brushes[i].draw();
+  }
+
   obstacle.draw();
   
   Engine.update(engine);
