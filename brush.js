@@ -2,9 +2,20 @@ class Brush {
   constructor(x, y, radius) {
     this.body = Matter.Bodies.circle(x, y, radius);
     this.radius = radius;
-    this.body.restitution = 1; // Aggiungi un po' di rimbalzo
+    this.body.restitution = 2; // Aggiungi un po' di rimbalzo
     this.color = color(random(255), random(255), random(255)); // Colore casuale per ogni pennello
-}
+
+    //subscribe to collision events
+    Matter.Events.on(engine, 'collisionStart', (event) => {
+        let pairs = event.pairs;
+        for (let pair of pairs) {
+            if (pair.bodyA === this.body || pair.bodyB === this.body) {
+                this.onCollision(); // Cambia colore al contatto
+            }
+        };
+    });
+    }
+
 
   draw() {
     const position = this.body.position;
@@ -13,6 +24,10 @@ class Brush {
     noStroke();
     fill(this.color);
     circle(position.x, position.y, this.radius * 2);
+  }
+
+  onCollision() {
+    this.color = color(random(255), random(255), random(255)); //collegato a collision event lassù, cambia il colore del pennello quando collide con un ostacolo
   }
 
   keepInBounds() {
