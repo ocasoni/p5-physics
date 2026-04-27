@@ -12,9 +12,24 @@ let NUM_BRUSHES = 20;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
+  document.body.style.touchAction = 'none';
   engine = Engine.create();
   persistentLayer = createGraphics(windowWidth, windowHeight);
   persistentLayer.clear();
+
+  function swapBrushShapes(firstBody, secondBody) {
+    let firstShape = firstBody._ref.shape;
+    let secondShape = secondBody._ref.shape;
+    firstBody._ref.setShape(secondShape);
+    secondBody._ref.setShape(firstShape);
+  }
+
+  function swapBrushColors(firstBody, secondBody) {
+    let firstIndex = firstBody._ref.getPaletteIndex();
+    let secondIndex = secondBody._ref.getPaletteIndex();
+    firstBody._ref.setPaletteIndex(secondIndex);
+    secondBody._ref.setPaletteIndex(firstIndex);
+  }
 
   // central collision handler: quando due corpi collidono, il corpo più grande diventa un rombo
   Matter.Events.on(engine, 'collisionStart', (event) => {
@@ -34,26 +49,34 @@ function setup() {
       let areaA = area(a);
       let areaB = area(b);
       let larger = areaA >= areaB ? a : b;
-      let smaller = larger === a ? b : a;
-
-      // Se entrambi sono pennelli non bloccati: scambiano l'indice della palette (manteniamo lo swap dei colori)
+      // Regole di collisione tra pennelli non bloccati
       if (a._ref && b._ref && a._ref.type === 'brush' && b._ref.type === 'brush' && !a._ref.locked && !b._ref.locked) {
-        let idxA = a._ref.getPaletteIndex();
-        let idxB = b._ref.getPaletteIndex();
+        let shapeA = a._ref.shape;
+        let shapeB = b._ref.shape;
 
-        // swap degli indici di palette
-        a._ref.setPaletteIndex(idxB);
-        b._ref.setPaletteIndex(idxA);
+        // rettangoli <-> cerchi: scambio di forma
+        if ((shapeA === 'rect' && shapeB === 'circle') || (shapeA === 'circle' && shapeB === 'rect')) {
+          swapBrushShapes(a, b);
+          continue;
+        }
 
-        // entrambi avanzano alla forma successiva
-        a._ref.nextShape();
-        b._ref.nextShape();
-        continue;
-      }
+        // quadrati <-> triangoli: scambio di forma
+        if ((shapeA === 'square' && shapeB === 'triangle') || (shapeA === 'triangle' && shapeB === 'square')) {
+          swapBrushShapes(a, b);
+          continue;
+        }
 
-      // comportamento generico: se il corpo più grande è un pennello, diventa rombo
-      if (larger._ref && larger._ref.type === 'brush') {
-        larger._ref.nextShape();
+        // quadrati <-> cerchi: scambio di colore
+        if ((shapeA === 'square' && shapeB === 'circle') || (shapeA === 'circle' && shapeB === 'square')) {
+          swapBrushColors(a, b);
+          continue;
+        }
+
+        // triangoli <-> rettangoli: scambio di colore
+        if ((shapeA === 'triangle' && shapeB === 'rect') || (shapeA === 'rect' && shapeB === 'triangle')) {
+          swapBrushColors(a, b);
+          continue;
+        }
       }
     }
   });
@@ -61,18 +84,29 @@ function setup() {
   // crea pennelli: metà saranno "lente" impostando frictionAir maggiore
   const slowCount = Math.floor(NUM_BRUSHES / 2);
   for (let i = 0; i < NUM_BRUSHES; i++) {
-    let size = random(10, 30);
+    let size = random(14, 36);
     brush = new Brush(width / 2, height / 4, size); //creati i pennelli in alto al centro
+
+    if (i < 5) {
+      brush.setShape('circle');
+    } else if (i < 10) {
+      brush.setShape('rect');
+    } else if (i < 15) {
+      brush.setShape('triangle');
+    } else {
+      brush.setShape('square');
+    }
+
     brushes.push(brush); //aggiunti i pennelli all'array
     Composite.add(engine.world, brush.body); //aggiunti i pennelli al mondo di Matter.js
 
     if (i < slowCount) {
       // pennelli lenti
-      brush.body.frictionAir = 0.08;
+      brush.body.frictionAir = 0.05;
       brush.slow = true;
     } else {
       // pennelli normali
-      brush.body.frictionAir = 0.005;
+      brush.body.frictionAir = 0.009;
       brush.slow = false;
     }
   }
@@ -88,9 +122,8 @@ function setup() {
   ];
   Composite.add(engine.world, walls);
 
-  // mouse handler: blocca il pennello cliccato
-  window.mousePressed = function() {
-    let mousePoint = { x: mouseX, y: mouseY };
+  function lockBrushAtPoint(x, y) {
+    let mousePoint = { x: x, y: y };
     // cerca corpi sotto il punto
     let bodies = Composite.allBodies(engine.world);
     let found = Matter.Query.point(bodies, mousePoint);
@@ -111,22 +144,18 @@ function setup() {
           let shape = b._ref.shape;
           persistentLayer.translate(pos.x, pos.y);
           persistentLayer.rotate(b.angle);
-          if (shape === 'diamond') {
-            persistentLayer.beginShape();
-            persistentLayer.vertex(0, -b._ref.radius);
-            persistentLayer.vertex(b._ref.radius, 0);
-            persistentLayer.vertex(0, b._ref.radius);
-            persistentLayer.vertex(-b._ref.radius, 0);
-            persistentLayer.endShape(CLOSE);
+          if (shape === 'rect') {
+            persistentLayer.rectMode(CENTER);
+            persistentLayer.rect(0, 0, b._ref.radius * 2, b._ref.radius * 1.2);
           } else if (shape === 'triangle') {
             persistentLayer.beginShape();
             persistentLayer.vertex(-b._ref.radius, b._ref.radius);
             persistentLayer.vertex(b._ref.radius, b._ref.radius);
             persistentLayer.vertex(0, -b._ref.radius);
             persistentLayer.endShape(CLOSE);
-          } else if (shape === 'rect') {
+          } else if (shape === 'square') {
             persistentLayer.rectMode(CENTER);
-            persistentLayer.rect(0, 0, b._ref.radius * 2, b._ref.radius * 1.2);
+            persistentLayer.rect(0, 0, b._ref.radius * 2, b._ref.radius * 2);
           } else {
             persistentLayer.circle(0, 0, b._ref.radius * 2);
           }
@@ -136,6 +165,16 @@ function setup() {
         }
       }
     }
+  }
+
+  // mouse e touch fanno la stessa cosa
+  window.mousePressed = function() {
+    lockBrushAtPoint(mouseX, mouseY);
+  };
+
+  window.touchStarted = function() {
+    lockBrushAtPoint(mouseX, mouseY);
+    return false;
   };
 
 

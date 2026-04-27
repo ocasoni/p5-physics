@@ -2,7 +2,7 @@ class Brush {
   constructor(x, y, radius) {
     this.body = Matter.Bodies.circle(x, y, radius);
     this.radius = radius;
-    this.body.restitution = 1; // Aggiungi un po' di rimbalzo
+    this.body.restitution = 1.5; // Aggiungi un po' di rimbalzo
     // Palette fissa di blu (da più scuro a più chiaro)
     this.palette = [
       color(10, 25, 74),   // Blu notte
@@ -19,9 +19,9 @@ class Brush {
     // keep a back-reference from Matter body to this wrapper
     this.body._ref = this;
     this.type = 'brush';
-    // shape cycling: 0=circle,1=diamond,2=triangle,3=rect
+    // shape cycling: 0=circle,1=rect,2=triangle,3=square
     this.shapeIndex = 0;
-    this.shapes = ['circle','diamond','triangle','rect'];
+    this.shapes = ['circle','rect','triangle','square'];
     this.shape = this.shapes[this.shapeIndex];
   }
 
@@ -41,17 +41,12 @@ class Brush {
     this.keepInBounds();
     noStroke();
     fill(this.color);
-    if (this.shape === 'diamond') {
+    if (this.shape === 'rect') {
       push();
       translate(position.x, position.y);
       rotate(this.body.angle);
       rectMode(CENTER);
-      beginShape();
-      vertex(0, -this.radius);
-      vertex(this.radius, 0);
-      vertex(0, this.radius);
-      vertex(-this.radius, 0);
-      endShape(CLOSE);
+      rect(0, 0, this.radius * 2, this.radius * 1.2);
       pop();
     } else if (this.shape === 'triangle') {
       push();
@@ -63,12 +58,12 @@ class Brush {
       vertex(0, -this.radius);
       endShape(CLOSE);
       pop();
-    } else if (this.shape === 'rect') {
+    } else if (this.shape === 'square') {
       push();
       translate(position.x, position.y);
       rotate(this.body.angle);
       rectMode(CENTER);
-      rect(0, 0, this.radius * 2, this.radius * 1.2);
+      rect(0, 0, this.radius * 2, this.radius * 2);
       pop();
     } else {
       circle(position.x, position.y, this.radius * 2);
@@ -82,6 +77,13 @@ class Brush {
   nextShape() {
     this.shapeIndex = (this.shapeIndex + 1) % this.shapes.length;
     this.shape = this.shapes[this.shapeIndex];
+  }
+
+  setShape(shapeName) {
+    if (this.shapes.includes(shapeName)) {
+      this.shape = shapeName;
+      this.shapeIndex = this.shapes.indexOf(shapeName);
+    }
   }
 
   keepInBounds() {
