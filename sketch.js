@@ -137,7 +137,7 @@ function setup() {
       brush.slow = true;
     } else {
       // pennelli normali
-      brush.body.frictionAir = 0.009;
+      brush.body.frictionAir = 0.02;
       brush.slow = false;
     }
   }
