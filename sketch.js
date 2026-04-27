@@ -17,6 +17,22 @@ function setup() {
   persistentLayer = createGraphics(windowWidth, windowHeight);
   persistentLayer.clear();
 
+  const lockedColorOptions = [
+    [255, 0, 0],    // rosso acceso
+    [255, 0, 120],  // rosa acceso
+    [255, 120, 0],  // arancio acceso
+    [200, 255, 0],  // lime
+    [0, 200, 0],    // verde acceso
+    [0, 200, 200],  // ciano
+    [120, 0, 255],  // viola acceso
+    [255, 0, 255]   // magenta
+  ];
+
+  function getLockedBrushColor() {
+    let rgb = random(lockedColorOptions);
+    return color(rgb[0], rgb[1], rgb[2]);
+  }
+
   function swapBrushShapes(firstBody, secondBody) {
     let firstShape = firstBody._ref.shape;
     let secondShape = secondBody._ref.shape;
@@ -78,13 +94,28 @@ function setup() {
           continue;
         }
       }
+
+      // Se un corpo in movimento colpisce un corpo bloccato, eredita il colore del blocco
+      if (a._ref && b._ref) {
+        let aLocked = !!a._ref.locked;
+        let bLocked = !!b._ref.locked;
+
+        if (aLocked !== bLocked) {
+          let movingBody = aLocked ? b : a;
+          let lockedBody = aLocked ? a : b;
+
+          if (movingBody._ref && movingBody._ref.type === 'brush') {
+            movingBody._ref.setColor(lockedBody._ref.color);
+          }
+        }
+      }
     }
   });
 
   // crea pennelli: metà saranno "lente" impostando frictionAir maggiore
   const slowCount = Math.floor(NUM_BRUSHES / 2);
   for (let i = 0; i < NUM_BRUSHES; i++) {
-    let size = random(14, 36);
+    let size = random(20, 48);
     brush = new Brush(width / 2, height / 4, size); //creati i pennelli in alto al centro
 
     if (i < 5) {
@@ -130,15 +161,20 @@ function setup() {
     if (found.length > 0) {
       for (let b of found) {
         if (b._ref && b._ref.type === 'brush' && !b._ref.locked) {
+          let lockedColor = getLockedBrushColor();
+
+          b._ref.setColor(lockedColor);
+
           // rendi il corpo statico e marcato come locked
           Body.setStatic(b, true);
           b._ref.locked = true;
           b._ref.type = 'obstacle';
+          b._ref.lockedColor = lockedColor;
 
           // disegna permanentemente la forma corrente sul layer persistente
           persistentLayer.push();
           persistentLayer.noStroke();
-          let c = b._ref.color;
+          let c = lockedColor;
           persistentLayer.fill(red(c), green(c), blue(c));
           let pos = b.position;
           let shape = b._ref.shape;

@@ -30,6 +30,14 @@ class Brush {
     this.color = this.palette[this.paletteIndex];
   }
 
+  setColor(newColor) {
+    this.color = newColor;
+  }
+
+  setColor(newColor) {
+    this.color = newColor;
+  }
+
   getPaletteIndex() {
     return this.paletteIndex;
   }
