@@ -3,18 +3,36 @@ class Brush {
     this.body = Matter.Bodies.circle(x, y, radius);
     this.radius = radius;
     this.body.restitution = 1; // Aggiungi un po' di rimbalzo
-    this.color = color(random(255), random(255), random(255)); // Colore casuale per ogni pennello
+    // Palette fissa di blu (da più scuro a più chiaro)
+    this.palette = [
+      color(10, 25, 74),   // Blu notte
+      color(0, 51, 153),   // Blu intenso
+      color(0, 102, 204),  // Blu medio
+      color(51, 153, 255), // Blu brillante
+      color(153, 204, 255) // Azzurro chiaro
+    ];
 
-    //subscribe to collision events
-    Matter.Events.on(engine, 'collisionStart', (event) => {
-        let pairs = event.pairs;
-        for (let pair of pairs) {
-            if (pair.bodyA === this.body || pair.bodyB === this.body) {
-                this.onCollision(); // Cambia colore al contatto
-            }
-        };
-    });
-    }
+    // scegli un colore iniziale dalla palette (indice casuale)
+    this.paletteIndex = floor(random(0, this.palette.length));
+    this.color = this.palette[this.paletteIndex];
+
+    // keep a back-reference from Matter body to this wrapper
+    this.body._ref = this;
+    this.type = 'brush';
+    // shape cycling: 0=circle,1=diamond,2=triangle,3=rect
+    this.shapeIndex = 0;
+    this.shapes = ['circle','diamond','triangle','rect'];
+    this.shape = this.shapes[this.shapeIndex];
+  }
+
+  setPaletteIndex(i) {
+    this.paletteIndex = ((i % this.palette.length) + this.palette.length) % this.palette.length;
+    this.color = this.palette[this.paletteIndex];
+  }
+
+  getPaletteIndex() {
+    return this.paletteIndex;
+  }
 
 
   draw() {
@@ -23,11 +41,47 @@ class Brush {
     this.keepInBounds();
     noStroke();
     fill(this.color);
-    circle(position.x, position.y, this.radius * 2);
+    if (this.shape === 'diamond') {
+      push();
+      translate(position.x, position.y);
+      rotate(this.body.angle);
+      rectMode(CENTER);
+      beginShape();
+      vertex(0, -this.radius);
+      vertex(this.radius, 0);
+      vertex(0, this.radius);
+      vertex(-this.radius, 0);
+      endShape(CLOSE);
+      pop();
+    } else if (this.shape === 'triangle') {
+      push();
+      translate(position.x, position.y);
+      rotate(this.body.angle);
+      beginShape();
+      vertex(-this.radius, this.radius);
+      vertex(this.radius, this.radius);
+      vertex(0, -this.radius);
+      endShape(CLOSE);
+      pop();
+    } else if (this.shape === 'rect') {
+      push();
+      translate(position.x, position.y);
+      rotate(this.body.angle);
+      rectMode(CENTER);
+      rect(0, 0, this.radius * 2, this.radius * 1.2);
+      pop();
+    } else {
+      circle(position.x, position.y, this.radius * 2);
+    }
   }
 
   onCollision() {
-    this.color = color(random(255), random(255), random(255)); //collegato a collision event lassù, cambia il colore del pennello quando collide con un ostacolo
+    // Gestito centralmente in sketch.js; lasciare vuoto per evitare conflitti
+  }
+
+  nextShape() {
+    this.shapeIndex = (this.shapeIndex + 1) % this.shapes.length;
+    this.shape = this.shapes[this.shapeIndex];
   }
 
   keepInBounds() {

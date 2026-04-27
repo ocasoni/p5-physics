@@ -4,6 +4,10 @@ class Obstacle {
     this.width = width;
     this.height = height;
 
+    // keep a back-reference from Matter body to this wrapper
+    this.body._ref = this;
+    this.type = 'obstacle';
+
     Matter.Body.setAngle(this.body, angle);
   }
 
@@ -16,7 +20,8 @@ class Obstacle {
     rotate(angle);
     rectMode(CENTER);
     noStroke();
-    fill(0, 255, 0);
+    // usa una tonalità di blu per l'ostacolo per mantenere la palette coerente
+    fill(30, 90, 200);
     rect(0, 0, this.width, this.height);
     pop();
   }
