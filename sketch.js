@@ -7,6 +7,18 @@ let engine;
 let brush;
 let brushes = [];
 let persistentLayer;
+let lockedBrushCount = 0;
+
+const warmLockPalette = [
+    [255, 0, 0],    // rosso acceso
+  [255, 0, 120],  // rosa acceso
+  [255, 120, 0],  // arancio acceso
+  [200, 255, 0],  // lime
+  [0, 200, 0],    // verde acceso
+  [0, 200, 200],  // ciano
+  [120, 0, 255],  // viola acceso
+  [255, 0, 255]   // magenta
+];
 
 let NUM_BRUSHES = 20;
 
@@ -17,19 +29,9 @@ function setup() {
   persistentLayer = createGraphics(windowWidth, windowHeight);
   persistentLayer.clear();
 
-  const lockedColorOptions = [
-    [255, 0, 0],    // rosso acceso
-    [255, 0, 120],  // rosa acceso
-    [255, 120, 0],  // arancio acceso
-    [200, 255, 0],  // lime
-    [0, 200, 0],    // verde acceso
-    [0, 200, 200],  // ciano
-    [120, 0, 255],  // viola acceso
-    [255, 0, 255]   // magenta
-  ];
-
   function getLockedBrushColor() {
-    let rgb = random(lockedColorOptions);
+    let paletteIndex = min(lockedBrushCount, warmLockPalette.length - 1);
+    let rgb = warmLockPalette[paletteIndex];
     return color(rgb[0], rgb[1], rgb[2]);
   }
 
@@ -115,7 +117,7 @@ function setup() {
   // crea pennelli: metà saranno "lente" impostando frictionAir maggiore
   const slowCount = Math.floor(NUM_BRUSHES / 2);
   for (let i = 0; i < NUM_BRUSHES; i++) {
-    let size = random(20, 48);
+    let size = random(14, 36);
     brush = new Brush(width / 2, height / 4, size); //creati i pennelli in alto al centro
 
     if (i < 5) {
@@ -137,7 +139,7 @@ function setup() {
       brush.slow = true;
     } else {
       // pennelli normali
-      brush.body.frictionAir = 0.02;
+      brush.body.frictionAir = 0.009;
       brush.slow = false;
     }
   }
@@ -170,6 +172,7 @@ function setup() {
           b._ref.locked = true;
           b._ref.type = 'obstacle';
           b._ref.lockedColor = lockedColor;
+          lockedBrushCount++;
 
           // disegna permanentemente la forma corrente sul layer persistente
           persistentLayer.push();
